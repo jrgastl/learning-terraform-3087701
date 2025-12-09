@@ -63,11 +63,6 @@ module "blog_alb" {
     }   
   }
 
-resource "aws_autoscaling_attachment" "blog_alb_attachment" {
-  autoscaling_group_name = module.blog_autoscaling.this_autoscaling_group_id
-  lb_target_group_arn    = module.blog_alb.this_lb_target_group_arns["ex-instance"]
-}
-
   target_groups = {
     ex-instance = {
       name_prefix      = "blog"
@@ -80,6 +75,11 @@ resource "aws_autoscaling_attachment" "blog_alb_attachment" {
   tags = {
     Environment = "dev"
   }
+}
+
+resource "aws_autoscaling_attachment" "blog_alb_attachment" {
+  autoscaling_group_name = module.blog_autoscaling.this_autoscaling_group_id
+  lb_target_group_arn    = module.blog_alb.this_lb_target_group_arns["ex-instance"]
 }
 
 module "blog_sg" {
