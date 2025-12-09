@@ -31,7 +31,7 @@ module "blog_vpc" {
 
 module "blog_autoscaling" {
   source  = "terraform-aws-modules/autoscaling/aws"
-  version = "6.5.2"
+  version = "9.0.2"
 
   name = "blog"
 
@@ -45,33 +45,33 @@ module "blog_autoscaling" {
 }
 
 module "blog_alb" {
-  source  = "terraform-aws-modules/alb/aws"
-  version = "~> 6.0"
+  source = "terraform-aws-modules/alb/aws"
 
-  name = "blog-alb"
+  name            = "blog-alb"
+  vpc_id          = module.blog_vpc.vpc_id
+  subnets         = module.blog_vpc.public_subnets
+  security_groups = [module.blog_sg.security_group_id]
 
-  load_balancer_type = "application"
+  listeners = {
+    ex-http-https-redirect = {
+      port     = 80
+      protocol = "HTTP"
+      redirect = {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }   
+  }
 
-  vpc_id             = module.blog_vpc.vpc_id
-  subnets            = module.blog_vpc.public_subnets
-  security_groups    = [module.blog_sg.security_group_id]
-
-  target_groups = [
-    {
-      name_prefix      = "blog-"
-      backend_protocol = "HTTP"
-      backend_port     = 80
+  target_groups = {
+    ex-instance = {
+      name_prefix      = "blog"
+      protocol         = "HTTP"
+      port             = 80
       target_type      = "instance"
     }
-  ]
-
-  http_tcp_listeners = [
-    {
-      port               = 80
-      protocol           = "HTTP"
-      target_group_index = 0
-    }
-  ]
+  }
 
   tags = {
     Environment = "dev"
